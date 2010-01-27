@@ -158,6 +158,8 @@ $tests = array(
 	'first_item_date',
 	'first_item_description',
 	'first_item_id',
+	'first_item_latitude',
+	'first_item_longitude',
 	'first_item_permalink',
 	'first_item_title',
 );
