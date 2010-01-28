@@ -22,14 +22,19 @@ if (isset($_GET['feed']) && $_GET['feed'] !== '')
 		$_GET['feed'] = stripslashes($_GET['feed']);
 	}
 
-	// Use the URL that was passed to the page in SimplePie
-	$feed->set_feed_url($_GET['feed']);
-}
-
-// Allow us to change the input encoding from the URL string if we want to. (optional)
-if (!empty($_GET['input']))
-{
-	$feed->set_input_encoding($_GET['input']);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $_GET['feed']);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 45);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_USERAGENT, SIMPLEPIE_USERAGENT);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_HEADER, false);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
+	
+	$feed->set_raw_data(curl_exec($ch));
+	curl_close($ch);
 }
 
 // Allow us to choose to not re-order the items by date. (optional)
@@ -49,9 +54,11 @@ if (!empty($_GET['force']) && $_GET['force'] == 'true')
 // this is called.
 $success = $feed->init();
 
-// We'll make sure that the right content type and character encoding gets set automatically.
-// This function will grab the proper character encoding, as well as set the content type to text/html.
-$feed->handle_content_type();
+// Set URL to be displayed 
+$url = isset($_GET['feed']) ? strip_tags($_GET['feed']) : '';
+
+// Force UTF-8 output since simplepie always outputs UTF-8
+header('Content-Type: text/html; charset=UTF-8');
 
 // When we end our PHP block, we want to make sure our DOCTYPE is on the top line to make
 // sure that the browser snaps into Standards Mode.
@@ -61,8 +68,8 @@ $feed->handle_content_type();
 <head>
 <title>SimplePie: Demo</title>
 
-<link rel="stylesheet" href="./for_the_demo/sIFR-screen.css" type="text/css" media="screen">
-<link rel="stylesheet" href="./for_the_demo/sIFR-print.css" type="text/css" media="print">
+<link rel="stylesheet" href="./for_the_demo/sIFR-screen.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="./for_the_demo/sIFR-print.css" type="text/css" media="print" />
 <link rel="stylesheet" href="./for_the_demo/simplepie.css" type="text/css" media="screen, projector" />
 
 <script type="text/javascript" src="./for_the_demo/sifr.js"></script>
@@ -106,7 +113,7 @@ $feed->handle_content_type();
 
 
 					<!-- If a feed has already been passed through the form, then make sure that the URL remains in the form field. -->
-					<p><input type="text" name="feed" value="<?php if ($feed->subscribe_url()) echo $feed->subscribe_url(); ?>" class="text" id="feed_input" />&nbsp;<input type="submit" value="Read" class="button" /></p>
+					<p><input type="text" name="feed" value="<?php echo $url; ?>" class="text" id="feed_input" />&nbsp;<input type="submit" value="Read" class="button" /></p>
 
 
 				</div>
@@ -203,36 +210,6 @@ $feed->handle_content_type();
 
 						<!-- Display the item's primary content. -->
 						<?php echo $item->get_content(); ?>
-
-						<?php
-						// Check for enclosures.  If an item has any, set the first one to the $enclosure variable.
-						if ($enclosure = $item->get_enclosure(0))
-						{
-							// Use the embed() method to embed the enclosure into the page inline.
-							echo '<div align="center">';
-							echo '<p>' . $enclosure->embed(array(
-								'audio' => './for_the_demo/place_audio.png',
-								'video' => './for_the_demo/place_video.png',
-								'mediaplayer' => './for_the_demo/mediaplayer.swf',
-								'altclass' => 'download'
-							)) . '</p>';
-
-							if ($enclosure->get_link() && $enclosure->get_type())
-							{
-								echo '<p class="footnote" align="center">(' . $enclosure->get_type();
-								if ($enclosure->get_size())
-								{
-									echo '; ' . $enclosure->get_size() . ' MB';
-								}
-								echo ')</p>';
-							}
-							if ($enclosure->get_thumbnail())
-							{
-								echo '<div><img src="' . $enclosure->get_thumbnail() . '" alt="" /></div>';
-							}
-							echo '</div>';
-						}
-						?>
 
 					</div>
 
