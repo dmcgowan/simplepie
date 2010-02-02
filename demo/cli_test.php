@@ -6,8 +6,20 @@ include_once('../simplepie.class.php');
 $feed = new SimplePie();
 if (isset($argv[1]) && $argv[1] !== '')
 {
-	$feed->set_feed_url($argv[1]);
-	$feed->enable_cache(false);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $argv[1]);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 45);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_USERAGENT, SIMPLEPIE_USERAGENT);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_HEADER, false);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
+	
+	$feed->set_raw_data(curl_exec($ch));
+	curl_close($ch);
+	
 	$feed->init();
 }
 

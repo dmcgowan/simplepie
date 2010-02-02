@@ -10,8 +10,20 @@ if (isset($_GET['feed']) && $_GET['feed'] !== '')
 	{
 		$_GET['feed'] = stripslashes($_GET['feed']);
 	}
-	$feed->set_feed_url($_GET['feed']);
-	$feed->enable_cache(false);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $_GET['feed']);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 45);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_USERAGENT, SIMPLEPIE_USERAGENT);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_HEADER, false);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
+	
+	$feed->set_raw_data(curl_exec($ch));
+	curl_close($ch);
+	
 	$starttime = explode(' ', microtime());
 	$starttime = $starttime[1] + $starttime[0];
 	$feed->init();
